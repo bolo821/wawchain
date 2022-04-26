@@ -67,5 +67,5 @@
     "@types/react-router-dom": "^5.1.7",
     "sass": "^1.51.0"
   },
-  "homepage": "/platform/"
+  "homepage": "/"
 }

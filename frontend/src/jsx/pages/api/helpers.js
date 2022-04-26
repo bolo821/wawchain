@@ -5,8 +5,6 @@ import { SERVER_URL } from '../../../apiConfig';
 const CancelToken = axios.CancelToken;
 var cancel = null;
 
-let mainIndex = 0;
-
 // function that gets token information using given token address.
 export async function getSymbolFromId(id) {
 	const res = await axios.request('https://graphql.bitquery.io', {

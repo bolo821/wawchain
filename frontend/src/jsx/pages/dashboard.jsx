@@ -1,13 +1,12 @@
 /* eslint-disable */
-import React, { } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useParams, useHistory } from 'react-router-dom';
 import { Tab, Nav } from 'react-bootstrap';
 import Header2 from '../layout/header2';
 import Sidebar from '../layout/sidebar';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import 'react-rangeslider/lib/index.css'
-
-import { useState, useEffect } from 'react';
-import { useParams, useHistory } from 'react-router-dom';
 import Datafeed from './api/';
 import { 
 	getSymbolFromId,
@@ -19,9 +18,7 @@ import {
     clearRequest,
     getTimeString,
 } from './api/helpers';
-
 import Autocomplete from './components/Autocomplete';
-import { useDispatch, useSelector } from 'react-redux';
 import { 
     setAutoComplete, 
     getTradingLogs,
