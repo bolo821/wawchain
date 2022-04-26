@@ -1,0 +1,158 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.card-body table td:hover {
+  cursor: pointer;
+}
+
+.auto-complete-container {
+  position: absolute;
+  z-index: 10;
+  background: #131722;
+  border: 1px solid #363C4E;
+  border-radius: 5px;
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  top: 100%;
+  left: 0;
+  box-shadow: 0 5px 5px #000;
+}
+
+.auto-complete-container p {
+  color: white;
+  margin: 0;
+  line-height: 1;
+  cursor: default;
+  padding: 10px 0 10px 20px;
+}
+
+.auto-complete-container p:hover {
+  background: #010101;
+}
+
+.toast {
+  position: absolute;
+  right: 30px;
+  top: 0;
+  min-width: 350px;
+  z-index: 9999;
+}
+
+.close:focus {
+  outline: none;
+}
+.toast-header {
+  flex-direction: row-reverse;
+}
+.toast-body {
+  color: black;
+}
+
+.signin-btn {
+  position: relative;
+  right: 0;
+  top: 0;
+}
+.card-scroll-rt {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.transaction-col-1, .transaction-col-2, .transaction-col-3 {
+  width: 25%;
+}
+
+@media (max-width: 768px) {
+  .header-username {
+    display: none!important;
+  }
+  .search-string-rt {
+    display: none;
+  }
+  .transaction-col-1 {
+    width: 25%;
+  }
+  .transaction-col-2 {
+    width: 50%;
+  }
+  .transaction-col-3 {
+    display: none;
+  }
+  .transaction-table td {
+    padding: 0!important;
+  }
+}
+
+@media(max-width: 576px) {
+  .transaction-table {
+    font-size: 12px;
+  }
+}
+
+.room-list-bn-rt {
+  min-width: 102px;
+}
+
+.counter-rt {
+  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: none;
+}
+.counter-rt h1 {
+  margin: auto;
+  color: green;
+  z-index: 100;
+}
+
+@media (min-width: 576px) {
+  .room-create-bn-rt {
+    width: 50%;
+  }
+}
+
+@media (min-width: 768px) {
+  .room-create-bn-rt {
+    width: 25%;
+  }
+}
