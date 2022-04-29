@@ -156,7 +156,7 @@ function Dashboard() {
             let pairs = await getPairs(token.address);
             if (pairs && pairs.length) {
                 localStorage.setItem('pool', JSON.stringify(pairs[0]));
-                await getMarketInfo(COMMON_TOKENS.indexOf(pairs[0].address));
+                await getMarketInfo(Math.max(COMMON_TOKENS.indexOf(pairs[0].token0), COMMON_TOKENS.indexOf(pairs[0].token1)));
                 setTimeout(() => initChart(data));
             }
 		}
