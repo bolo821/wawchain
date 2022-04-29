@@ -116,7 +116,7 @@ function Dashboard() {
     // function that gets the pull and pair counts and usd prices for common tokens
     const getMarketInfo = async index => {
         let prices = await getMarketInformation();
-        if (prices && index > 0) {
+        if (prices && index >= 0) {
             localStorage.setItem('wcroPrice', prices[index].value);
         } else {
             return 1;
