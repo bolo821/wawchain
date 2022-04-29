@@ -1,14 +1,16 @@
 const express = require('express');
 const router = express.Router();
+const axios = require('axios');
 
 const BigNumber = require('bignumber.js');
 const Web3 = require('web3');
-const web3 = new Web3("https://bsc-dataseed.binance.org/");
+const web3 = new Web3(process.env.RPC_URL);
 
 router.post("/getLogs", async (req, res, next) => {
 	const { address, fromBlock, decimal } = req.body;
 
 	let logInfo = null;
+	let error = null;
 	logInfo = await web3.eth.getPastLogs(
 		{
 			address: address,
@@ -21,6 +23,7 @@ router.post("/getLogs", async (req, res, next) => {
 		}
 	).catch( err => {
 		logInfo = null;
+		error = err;
 	});
 
 	if (logInfo && logInfo.length) {
@@ -122,14 +125,135 @@ router.post("/getLogs", async (req, res, next) => {
 		});
 		next();
 	} else {
-		res.json({
-			success: false,
-			msg: 'Rpc call error',
+		res.status(500).json({
+			message: 'Internal server error.',
+			error: error,
 		});
 		next();
 	}
+});
 
-	
+router.post('/get_history_data', (req, res) => {
+	const { address, pullAddress, from, to, interval } = req.body;
+
+	axios.request({
+		method: 'GET',
+		url: `${process.env.THIRD_PARTY_URL}/tokens/${address}/candles/${pullAddress}?from=${from}&to=${to}&interval=${interval}`,
+	}).then(result => {
+		if (result && result.data) {
+			res.status(200).json({
+				bars: result.data,
+			});
+		} else {
+			res.status(400).json({
+				message: 'Result not found.',
+				error: '',
+			});
+		}
+	}).catch(err => {
+		res.status(500).json({
+			message: "Internal server error.",
+			error: err,
+		});
+	});
+});
+
+router.post('/get_token_information', (req, res) => {
+	const { address } = req.body;
+
+	axios.request({
+		method: 'GET',
+		url: `${process.env.THIRD_PARTY_URL}/tokens/${address}`,
+	}).then(result => {
+		if (result && result.data) {
+			res.status(200).json({
+				token: result.data,
+			});
+		} else {
+			res.status(400).json({
+				message: 'Result not found.',
+				error: '',
+			});
+		}
+	}).catch(err => {
+		res.status(500).json({
+			message: "Internal server error.",
+			error: err,
+		});
+	});
+});
+
+router.get('/get_market_info', (req, res) => {
+	axios.request({
+		method: 'POST',
+		url: `${process.env.THIRD_PARTY_URL}/tokens`,
+	}).then(result => {
+		if (result && result.data) {
+			res.status(200).json({
+				prices: result.data.usd,
+			});
+		} else {
+			res.status(400).json({
+				message: 'Result not found.',
+				error: '',
+			});
+		}
+	}).catch(err => {
+		res.status(500).json({
+			message: "Internal server error.",
+			error: err,
+		});
+	});
+});
+
+router.post('/get_parameters', (req, res) => {
+	const { address } = req.body;
+
+	axios.request({
+		method: 'GET',
+		url: `${process.env.THIRD_PARTY_URL}/tokens/${address}/params`,
+	}).then(result => {
+		if (result && result.data) {
+			res.status(200).json({
+				data: result.data,
+			});
+		} else {
+			res.status(400).json({
+				message: 'Result not found.',
+				error: '',
+			});
+		}
+	}).catch(err => {
+		res.status(500).json({
+			message: "Internal server error.",
+			error: err,
+		});
+	});
+});
+
+router.post('/get_pairs', (req, res) => {
+	const { address } = req.body;
+
+	axios.request({
+		method: 'GET',
+		url: `${process.env.THIRD_PARTY_URL}/tokens/${address}/pairs`,
+	}).then(result => {
+		if (result && result.data) {
+			res.status(200).json({
+				data: result.data,
+			});
+		} else {
+			res.status(400).json({
+				message: 'Result not found.',
+				error: '',
+			});
+		}
+	}).catch(err => {
+		res.status(500).json({
+			message: "Internal server error.",
+			error: err,
+		});
+	});
 });
 
 module.exports = router;

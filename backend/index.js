@@ -4,34 +4,27 @@ const fs = require('fs');
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+require('dotenv').config();
 
 const app = express();
 
-const mongoose = require("mongoose");
-const config = require('./config/config');
-const db_string = config.MONGO_URL;
-const MODE = config.DEPLOY_MODE;
+// const mongoose = require("mongoose");
+// const db_string = process.env.MONGO_URL;
+const MODE = process.env.DEPLOY_MODE;
 
-require("./models/Token");
-require("./models/User");
-
-mongoose.connect(db_string, { useNewUrlParser: true })
-.then(() => {
-  	console.log("MongoDB connected...");
-})
-.catch(err => console.log(err));
+// mongoose.connect(db_string, { useNewUrlParser: true })
+// .then(() => {
+//   	console.log("MongoDB connected...");
+// })
+// .catch(err => console.log(err));
 
 app.use(bodyParser.json());
 app.use(cors());
 
-const token = require('./routes/tokenRoutes');
-const user = require('./routes/userRoutes');
-const wallet = require('./routes/walletRoutes');
 const rpc = require('./routes/rpcRoutes');
-app.use('/api/token', token);
-app.use('/api/user', user);
-app.use('/api/wallet', wallet);
+const search = require('./routes/searchRoutes');
 app.use('/api/rpc', rpc);
+app.use('/api/search', search);
 
 let PORT;
 if (MODE === 'production') {

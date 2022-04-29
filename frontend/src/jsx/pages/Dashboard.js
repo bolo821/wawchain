@@ -7,59 +7,59 @@ import Header2 from '../layout/header2';
 import Sidebar from '../layout/sidebar';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import 'react-rangeslider/lib/index.css'
-import Datafeed from './api/';
+import Datafeed from './api';
 import { 
 	getSymbolFromId,
-	get24hChangeRate,
-    getBalance,
-    getTokenPrice,
-    get24hVolume,
     numberWithCommas,
     clearRequest,
     getTimeString,
+    getMarketInformation,
+    getParameters,
+    getPairs,
 } from './api/helpers';
-import Autocomplete from './components/Autocomplete';
 import { 
     setAutoComplete, 
     getTradingLogs,
     emptyLogs,
     getCurrentBlock,
-    setBusdPriceAction,
 } from '../../actions/main';
-import { setMessage } from '../../actions/message';
-
-const Web3 = require("web3");
-const web3 = new Web3("https://bsc-dataseed.binance.org/");
+import { toast } from 'react-toastify';
+import { searchTokens, SET_AUTOCOMPLETE } from '../../actions/search';
+import Autocomplete from './components/Autocomplete';
 
 var currentBlock = null;
-var currentBPrice = null;
-var headerTimer = null;
 var footerTimer = null;
 var unmountComponent = false;
 
+const COMMON_TOKENS = [
+    '0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23',
+    '0xe44fd7fcb2b1581822d0c862b68222998a0c299a',
+    '0x062e66477faf219f25d27dced647bf57c3107d52',
+    '0xc21223249ca28397b4b6541dffaecc539bff0c59',
+    '0x66e428c3f67a68878562e79a0234c1f83c208770',
+];
+
 function Dashboard() {
     const dispatch = useDispatch();
+
     const trades = useSelector(state => state.main.trades);
     const block = useSelector(state => state.main.block);
+    const autoComplete = useSelector(state => state.search.autoComplete);
     currentBlock = block;
 
     const { tokenId } = useParams();
     const history = useHistory();
-    const [searchText, setSearchText] = useState(() => '');
-	const [token, setToken] = useState(() => null);
-	const [icon, setIcon] = useState(() => '');
-	const [price, setPrice] = useState(() => 0);
-	const [rate, setRate] = useState(() => 0);
-    const [supply, setSupply] = useState(() => 0);
-    const [volume, setVolume] = useState(() => 0);
-    const [liquidity, setLiquidity] = useState(() => 0);
-    const [busdPrice, setBusdPrice] = useState(() => 0);
+    const [ searchText, setSearchText ] = useState(() => '');
+	const [ token, setToken ] = useState(() => null);
+	const [ price, setPrice ] = useState(() => 0);
+	const [ rate, setRate ] = useState(() => 0);
+    const [ marketCap, setMarketCap ] = useState(() => 0);
 
     const chartInitSuccess = localStorage.getItem('initSuccess');
 
     // if fail to load initial data of chart, this effect will be run.
     useEffect(() => {
-        if(chartInitSuccess === 'false' && token) {
+        if (chartInitSuccess === 'false' && token) {
             localStorage.setItem('initSuccess', 'none');
             window.tvWidget = new window.TradingView.widget({
                 symbol: `${token.symbol}`,
@@ -71,42 +71,34 @@ function Dashboard() {
                 theme: 'dark',
             });
         }
-    }, [chartInitSuccess]);
+    }, [ chartInitSuccess ]);
+
+    // Get current block number
+    useEffect(() => {
+        dispatch(getCurrentBlock());
+    }, [ dispatch ]);
 
     // price sharing with chart real time callback
     useEffect(() => {
-		if(price) {
+		if (price) {
 			localStorage.setItem('price', price);
 		}
-	}, [price]);
-
-    // handle for search inputbox string change
-    const handleSearchChange = (val, flag=false) => {
-		setSearchText(val);
-        if(flag)
-            history.push(`/token/${val}`);
-	}
+	}, [ price ]);
 
     // callback function which triggers when you click "Search" button
-	const handleSearch = async () => {
+	const handleSearch = () => {
 		history.push(`/token/${searchText}`);
 	}
 
     // effect functoin which triggers when the url changes - that is when token changes
     useEffect(() => {
-        if(headerTimer) {
-			clearInterval(headerTimer);
-		}
-		if(footerTimer) {
+		if (footerTimer) {
 			clearInterval(footerTimer);
 		}
         searchToken(tokenId);
 
         return function cleanup() {
             unmountComponent = true;
-            if(headerTimer) {
-                clearInterval(headerTimer);
-            }
             if(footerTimer) {
                 clearInterval(footerTimer);
             }
@@ -115,74 +107,65 @@ function Dashboard() {
 
             setPrice(0);
             setRate(0);
-            setVolume(0);
-            setLiquidity(0);
-            setSupply(0);
-            setBusdPrice(0);
+            setMarketCap(0);
 
             clearRequest();
         }
-	}, [tokenId]);
+	}, [ tokenId ]);
 
-    // function that sets token icon
-    const setTokenIcon = (tokenId) => {
-        let lowerToken = web3.utils.toChecksumAddress(tokenId.toLowerCase());
-        let tokenImg = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/${lowerToken}/logo.png`;
-        var request = new XMLHttpRequest();
-        request.open("GET", tokenImg, true);
-        request.send();
-        request.onload = function() {
-            status = request.status;
-            if (request.status == 200)
-            {
-                setIcon(tokenImg);
-            } else {
-                setIcon('/unknown.webp');
-            }
+    // function that gets the pull and pair counts and usd prices for common tokens
+    const getMarketInfo = async index => {
+        let prices = await getMarketInformation();
+        if (prices && index > 0) {
+            localStorage.setItem('wcroPrice', prices[index].value);
+        } else {
+            return 1;
         }
     }
 
     // function that starts search token by calling initChart function. If the token is not valid, it will display alert
 	const searchToken = async (id) => {
 		const token = await getSymbolFromId(id);
-		if(token === null) {
-			dispatch(setMessage({
-                display: true,
-                message: "Can not find such token.",
-            }));
+		if (token === null) {
+            toast.error('Can not find such token.');
             setToken(null);
-            history.push('/token/0x5e90253fbae4Dab78aa351f4E6fed08A64AB5590');
+            setSearchText('');
+            history.push('/token/0x09Aae6c66BC670016801e34d19B1775b038B6C43');
 		} else {
             let data = {
-				symbol: token.baseCurrency.symbol,
-				name: token.baseCurrency.name,
-				address: token.baseCurrency.address,
+				symbol: token.symbol,
+				name: token.name,
+				address: token.address,
+                decimal: token.decimals,
 			}
+            setMarketCap(token.market_cap);
 			setToken(data);
+            setPrice(parseFloat(token.usd_price));
 			localStorage.setItem('token', JSON.stringify(data));
-            setTokenIcon(id);
 
-            dispatch(getCurrentBlock());
-            dispatch(emptyLogs());
+            getParameters(token.address).then(res => {
+                if (res) {
+                    setRate(res.changes[4].value);
+                }
+            }).catch(err => {
 
-            localStorage.setItem('v1Pull', '');
-            localStorage.setItem('v2Pull', '');
-
-            setPrice(0);
-            setRate(0);
-            setVolume(0);
-            setLiquidity(0);
-            setSupply(0);
+            });
 
             unmountComponent = false;
 
-			setTimeout(() => initChart(data));
+            let pairs = await getPairs(token.address);
+            if (pairs && pairs.length) {
+                localStorage.setItem('pool', JSON.stringify(pairs[0]));
+                await getMarketInfo(COMMON_TOKENS.indexOf(pairs[0].address));
+                setTimeout(() => initChart(data));
+            }
 		}
 	}
 
     // function that initializes the chart and set timer so that we can get real time data of the token.
     const initChart = async (token) => {
         localStorage.setItem('initSuccess', 'none');
+        localStorage.setItem('from', 0);
 		window.tvWidget = new window.TradingView.widget({
 			symbol: `${token.symbol}`,
 			interval: '15',
@@ -193,58 +176,23 @@ function Dashboard() {
             theme: 'dark',
 		});
 		
-        const timer1 = setInterval(headerTicker, 5000);
-        headerTimer = timer1;
-        headerTicker();
-        setTimeout(() => {
-            const timer2 = setInterval(footerTicker, 5000);
-            footerTimer = timer2;
-        }, 2000)
-	}
-
-    //. timer function that gets header part data - price, 24h change rate, marketcap, 24h volume, liquidity.
-	const headerTicker = async () => {
-        let id = JSON.parse(localStorage.getItem('token')).address;
-        let bnbPrice = await getTokenPrice(id, '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c');
-        let busdPrice = await getTokenPrice('0xe9e7cea3dedca5984780bafc599bd69add087d56', '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c');
-        if(bnbPrice && busdPrice && !unmountComponent) {
-            let price = bnbPrice.price / busdPrice.price;
-            setPrice(price);
-            setBusdPrice(busdPrice.price);
-            currentBPrice = busdPrice.price;
-            dispatch(setBusdPriceAction(busdPrice.price));
-
-            setLiquidity(bnbPrice.liquidity * price);
-
-            let rate = await get24hChangeRate(price);
-            if(rate && !unmountComponent) {
-                setRate(rate);
-            }
-        }
-
-		let supply = await getBalance(id);
-        if(supply && !unmountComponent) {
-            setSupply(supply);
-        }
-
-        let volume = await get24hVolume();
-        if(volume !== null && !unmountComponent) {
-            setVolume(volume);
-        }
+        footerTicker();
+        const timer = setInterval(footerTicker, 5000);
+        footerTimer = timer;
 	}
 
     // timer function that gets logs for footer part.
 	const footerTicker = () => {
-        let v2Pull = localStorage.getItem('v2Pull');
-        if(currentBlock && v2Pull && currentBPrice > 0 && !unmountComponent) {
-            dispatch(getTradingLogs(v2Pull, currentBlock));
+        let pool = JSON.parse(localStorage.getItem('pool')).address;
+        if(currentBlock && !unmountComponent) {
+            dispatch(getTradingLogs(pool, currentBlock));
         }
 	}
 
     // when you click a row of log table, this function is triggered and open a new window which describes about that transaction.
     const handleRowClick = (e) => {
         window.open(
-            `https://bscscan.com/tx/${e.target.parentElement.id}`,
+            `https://cronoscan.com//tx/${e.target.parentElement.id}`,
             '_blank',
         );
     }
@@ -252,6 +200,30 @@ function Dashboard() {
     // function for auto-complete
     const handleAutocompleteClose = () => {
         dispatch(setAutoComplete(false));
+    }
+
+    const handleSearchTextChange = (text, flag) => {
+        if (flag) {
+            setSearchText(text);
+            dispatch({
+                type: SET_AUTOCOMPLETE,
+                payload: {},
+            });
+        } else {
+            setSearchText(text);
+            getAutoComplete(text);
+        }
+    }
+
+    const getAutoComplete = searchText => {
+        if (searchText.length >= 2) {
+            dispatch(searchTokens(searchText));
+        } else {
+            dispatch({
+                type: SET_AUTOCOMPLETE,
+                payload: {},
+            });
+        }
     }
 
     return (
@@ -263,7 +235,7 @@ function Dashboard() {
                 <div className="container-fluid">
                     <div className="row mb-3">
                         <div className="col-10">
-                            <Autocomplete onChange={handleSearchChange} />
+                            <Autocomplete searchText={searchText} setSearchText={handleSearchTextChange} items={autoComplete} />
                         </div>
                         <div className="col-2">
                             <button className="btn btn-success waves-effect p-0 w-100 h-100" onClick={handleSearch}>
@@ -282,9 +254,6 @@ function Dashboard() {
                                 <div className="card-body">
                                     <div className="row" style={{margin: '0'}}>
                                         <div className="col-xl col-lg col-md-4 col-sm-4 col-6 row">
-                                            <div style={{width: '40%', display: 'inline-block'}}>
-                                                <img src={icon} style={{width: '80%'}} alt="Icon"/>
-                                            </div>
                                             <div style={{width: '60%', display: 'inline-block'}}>
                                                 <p className="mb-0">Token</p>
                                                 <h6>{token ? token.symbol : ''}</h6>
@@ -297,16 +266,16 @@ function Dashboard() {
                                             </h6>
                                         </div>
                                         <div className="col-xl col-lg col-md-4 col-sm-4 col-6">
-                                            <p className="mb-0">24h Volume</p>
-                                            <h6>${numberWithCommas(parseInt(volume))}</h6>
+                                            <p className="mb-0">Price</p>
+                                            <h6>{price.toFixed(7)}</h6>
                                         </div>
                                         <div className="col-xl col-lg col-md-4 col-sm-4 col-6">
                                             <p className="mb-0">Liquidity</p>
-                                            <h6>${numberWithCommas(parseInt(liquidity))}</h6>
+                                            <h6>{price > 0 ? numberWithCommas(parseInt(marketCap / price)) : 0}</h6>
                                         </div>
                                         <div className="col-xl col-lg col-md-4 col-sm-4 col-6">
                                             <p className="mb-0">Marketcap</p>
-                                            <h6>${price ? numberWithCommas(parseInt(price*supply)) : 0}</h6>
+                                            <h6>${marketCap ? numberWithCommas(marketCap) : 0}</h6>
                                         </div>
                                     </div>
                                 </div>
@@ -367,8 +336,8 @@ function Dashboard() {
                                                             <thead>
                                                                 <tr>
                                                                     <th scope="col" className="transaction-col-1">Traded({token.symbol})</th>
-                                                                    <th scope="col" className="transaction-col-3">Token Price(USD)</th>
-                                                                    <th scope="col" className="transaction-col-1">Value(USD)</th>
+                                                                    <th scope="col" className="transaction-col-3">Token Price(CRO)</th>
+                                                                    <th scope="col" className="transaction-col-1">Value(CRO)</th>
                                                                     <th scope="col" className="transaction-col-2">Time</th>
                                                                 </tr>
                                                             </thead>
@@ -377,8 +346,10 @@ function Dashboard() {
                                                                     return (
                                                                         <tr key={index} id={ele.hash} onClick={handleRowClick}>
                                                                             <td className={ele.type === 'buy' ? "text-success" : "text-danger"}>{ele.current.toFixed(3)}</td>
-                                                                            <td className={ele.type === 'buy' ? "text-success transaction-col-3" : "text-danger transaction-col-3"}>{ele.price}</td>
-                                                                            <td className={ele.type === 'buy' ? "text-success" : "text-danger"}>{(ele.bnb/busdPrice).toFixed(3)}</td>
+                                                                            <td className={ele.type === 'buy' ? "text-success transaction-col-3" : "text-danger transaction-col-3"}>{
+                                                                                (ele.bnb / ele.current).toFixed(7)
+                                                                            }</td>
+                                                                            <td className={ele.type === 'buy' ? "text-success" : "text-danger"}>{(ele.bnb).toFixed(3)}</td>
                                                                             <td className={ele.type === 'buy' ? "text-success" : "text-danger"}>{getTimeString(ele.time*1000)}</td>
                                                                         </tr>
                                                                     )
@@ -395,8 +366,8 @@ function Dashboard() {
                                                             <thead>
                                                                 <tr>
                                                                     <th scope="col" className="transaction-col-1">Traded({token.name})</th>
-                                                                    <th scope="col" className="transaction-col-3">Token Price(USD)</th>
-                                                                    <th scope="col" className="transaction-col-1">Value(USD)</th>
+                                                                    <th scope="col" className="transaction-col-3">Token Price(CRO)</th>
+                                                                    <th scope="col" className="transaction-col-1">Value(CRO)</th>
                                                                     <th scope="col" className="transaction-col-2">Time</th>
                                                                 </tr>
                                                             </thead>
@@ -405,8 +376,8 @@ function Dashboard() {
                                                                     return (
                                                                         <tr key={index} id={ele.hash} onClick={handleRowClick}>
                                                                             <td className={ele.type === 'buy' ? "text-success" : "text-danger"}>{ele.current.toFixed(3)}</td>
-                                                                            <td className={ele.type === 'buy' ? "text-success transaction-col-3" : "text-danger transaction-col-3"}>{ele.price}</td>
-                                                                            <td className={ele.type === 'buy' ? "text-success" : "text-danger"}>{(ele.bnb/busdPrice).toFixed(3)}</td>
+                                                                            <td className={ele.type === 'buy' ? "text-success transaction-col-3" : "text-danger transaction-col-3"}>{(ele.bnb / ele.current).toFixed(7)}</td>
+                                                                            <td className={ele.type === 'buy' ? "text-success" : "text-danger"}>{(ele.bnb).toFixed(3)}</td>
                                                                             <td className={ele.type === 'buy' ? "text-success" : "text-danger"}>{getTimeString(ele.time*1000)}</td>
                                                                         </tr>
                                                                     )
@@ -423,8 +394,8 @@ function Dashboard() {
                                                             <thead>
                                                                 <tr>
                                                                     <th scope="col" className="transaction-col-1">Traded({token.name})</th>
-                                                                    <th scope="col" className="transaction-col-3">Token Price(USD)</th>
-                                                                    <th scope="col" className="transaction-col-1">Value(USD)</th>
+                                                                    <th scope="col" className="transaction-col-3">Token Price(CRO)</th>
+                                                                    <th scope="col" className="transaction-col-1">Value(CRO)</th>
                                                                     <th scope="col" className="transaction-col-2">Time</th>
                                                                 </tr>
                                                             </thead>
@@ -433,8 +404,8 @@ function Dashboard() {
                                                                     return (
                                                                         <tr key={index} id={ele.hash} onClick={handleRowClick}>
                                                                             <td className={ele.type === 'buy' ? "text-success" : "text-danger"}>{ele.current.toFixed(3)}</td>
-                                                                            <td className={ele.type === 'buy' ? "text-success transaction-col-3" : "text-danger transaction-col-3"}>{ele.price}</td>
-                                                                            <td className={ele.type === 'buy' ? "text-success" : "text-danger"}>{(ele.bnb/busdPrice).toFixed(3)}</td>
+                                                                            <td className={ele.type === 'buy' ? "text-success transaction-col-3" : "text-danger transaction-col-3"}>{(ele.bnb / ele.current).toFixed(7)}</td>
+                                                                            <td className={ele.type === 'buy' ? "text-success" : "text-danger"}>{(ele.bnb).toFixed(3)}</td>
                                                                             <td className={ele.type === 'buy' ? "text-success" : "text-danger"}>{getTimeString(ele.time*1000)}</td>
                                                                         </tr>
                                                                     )
