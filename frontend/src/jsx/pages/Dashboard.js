@@ -22,6 +22,7 @@ import {
     getTradingLogs,
     emptyLogs,
     getCurrentBlock,
+    getLiquidity,
 } from '../../actions/main';
 import { toast } from 'react-toastify';
 import { searchTokens, SET_AUTOCOMPLETE } from '../../actions/search';
@@ -45,6 +46,7 @@ function Dashboard() {
     const trades = useSelector(state => state.main.trades);
     const block = useSelector(state => state.main.block);
     const autoComplete = useSelector(state => state.search.autoComplete);
+    const liquidity = useSelector(state => state.main.liquidity);
     currentBlock = block;
 
     const { tokenId } = useParams();
@@ -96,6 +98,7 @@ function Dashboard() {
 			clearInterval(footerTimer);
 		}
         searchToken(tokenId);
+        dispatch(getLiquidity(tokenId));
 
         return function cleanup() {
             unmountComponent = true;
@@ -271,7 +274,7 @@ function Dashboard() {
                                         </div>
                                         <div className="col-xl col-lg col-md-4 col-sm-4 col-6">
                                             <p className="mb-0">Liquidity</p>
-                                            <h6>{price > 0 ? numberWithCommas(parseInt(marketCap / price)) : 0}</h6>
+                                            <h6>${numberWithCommas(parseInt(liquidity))}</h6>
                                         </div>
                                         <div className="col-xl col-lg col-md-4 col-sm-4 col-6">
                                             <p className="mb-0">Marketcap</p>

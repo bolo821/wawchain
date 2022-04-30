@@ -4,6 +4,7 @@ import {
   EMPTY_LOGS,
   SET_BLOCK,
   SET_BUSD_PRICE,
+  SET_LIQUIDITY,
 } from '../actions/main';
 
 const defaultState = {
@@ -15,6 +16,7 @@ const defaultState = {
   },
   block: null,
   busdPrice: 0,
+  liquidity: 0,
 }
 
 export default (state = defaultState, action) => {
@@ -99,6 +101,12 @@ export default (state = defaultState, action) => {
       return {
         ...state,
         busdPrice: action.payload,
+      }
+    }
+    case SET_LIQUIDITY: {
+      return {
+        ...state,
+        liquidity: action.payload,
       }
     }
     default:

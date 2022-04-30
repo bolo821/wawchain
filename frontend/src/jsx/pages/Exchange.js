@@ -10,7 +10,7 @@ import { Button } from 'react-bootstrap';
 import { useWeb3React } from "@web3-react/core";
 import Autocomplete from './components/Autocomplete';
 import { SET_FROM_AUTOCOMPLETE, searchFromAutocomplete, SET_TO_AUTOCOMPLETE, searchToAutocomplete } from '../../actions/exchange';
-import { callAggregatorAPI } from './api/helpers';
+import { callAggregatorAPI, getOwnedTokens } from './api/helpers';
 
 import getSwapParameters from '@kyberswap/aggregator-sdk';
 import { toast } from 'react-toastify';
@@ -55,6 +55,13 @@ function Exchange() {
             });
         }
     }, [ account, fromToken ]);
+
+    useEffect(() => {
+        if (account) {
+            const web3 = new Web3('https://bsc-dataseed.binance.org/');
+            console.log('web3 methods: ', web3.eth.accounts);
+        }
+    }, [ account ]);
 
     const handleFromTokenSearch = (text, flag) => {
         if (flag) {
