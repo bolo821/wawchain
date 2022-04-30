@@ -28,25 +28,25 @@ app.use('/api/search', search);
 
 let PORT;
 if (MODE === 'production') {
-	PORT = 8443;
-	const httpsServer = https.createServer({
-		key: fs.readFileSync('./wawchain.com.key'),
-		cert: fs.readFileSync('./wawchain_com_139798397wawchain_com.crt'),
-		ca: [
-			fs.readFileSync('./wawchain_com_139798397TrustedRoot.crt'),
-			fs.readFileSync('./wawchain_com_139798397DigiCertCA.crt'),
-		]
-	}, app);
+	// PORT = 8443;
+	// const httpsServer = https.createServer({
+	// 	key: fs.readFileSync('./wawchain.com.key'),
+	// 	cert: fs.readFileSync('./wawchain_com_139798397wawchain_com.crt'),
+	// 	ca: [
+	// 		fs.readFileSync('./wawchain_com_139798397TrustedRoot.crt'),
+	// 		fs.readFileSync('./wawchain_com_139798397DigiCertCA.crt'),
+	// 	]
+	// }, app);
 
-	options = {
-		cors: true,
-		origins: "*",
-	}
-	require('./socketServer')(httpsServer, options);
+	// options = {
+	// 	cors: true,
+	// 	origins: "*",
+	// }
+	// require('./socketServer')(httpsServer, options);
 
-	httpsServer.listen(PORT, () => {
-		console.log(`HTTPS Server running on port ${PORT}`);
-	});
+	// httpsServer.listen(PORT, () => {
+	// 	console.log(`HTTPS Server running on port ${PORT}`);
+	// });
 } else if (MODE === 'development') {
 	PORT = 5000;
 	const server = http.createServer(app);
