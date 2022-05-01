@@ -1,7 +1,7 @@
 /* eslint-disable */
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams, useHistory, Link } from 'react-router-dom';
 import { Tab, Nav } from 'react-bootstrap';
 import Header2 from '../layout/header2';
 import Sidebar from '../layout/sidebar';
@@ -287,27 +287,15 @@ function Dashboard() {
                         <div className="col-xl-5 col-xxl-12 col-lg-12 col-xxl-5">
                             <div className="card" style={{height: 'calc(100% - 20px)'}}>
                                 <div className="card-header">
-                                    <h4 className="card-title">Sponsor: Chris Token</h4>
+                                    <h4 className="card-title">Buy/Sell this token.</h4>
                                 </div>
                                 <div className="card-body">
-                                    <div className="row" style={{margin: '0'}}>
-                                        <div>
-                                            <p className="mb-0">
-                                                Chris is less than a day old! - NFT GENERATOR | Ownership renounced | LP locked. 700+ holders in only 1 hour !
-                                            </p>
-                                            <div className="row" style={{paddingTop: '10px'}}>
-                                                <div className="col-sm-auto col-6">
-                                                    <a href="#">Contract</a>
-                                                </div>
-                                                <div className="col-sm-auto col-6">
-                                                    <a href="#">Website</a>
-                                                </div>
-                                                <div className="col-sm-auto col-6">
-                                                    <a href="#">Telegram</a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <Link className="btn btn-success waves-effect mr-2" to={token ? `/exchange/buy/${JSON.stringify(token)}` : '#'}>
+                                        <span className="search-string-rt">Buy</span>
+                                    </Link>
+                                    <Link className="btn btn-danger waves-effect" to={token ? `/exchange/sell/${JSON.stringify(token)}` : '#'}>
+                                        <span className="search-string-rt">Sell</span>
+                                    </Link>
                                 </div>
                             </div>
                         </div>

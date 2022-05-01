@@ -249,34 +249,6 @@ export async function getLogs(address, fromBlock) {
 	}
 }
 
-export const getOwnedTokens = async () => {
-	const res = await axios.request('https://bsc-dataseed.binance.org/', {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		data: JSON.stringify(
-			{
-				"jsonrpc": "2.0",
-				"id": new Date().getTime(),
-				"method": "eth_accounts",
-				"params": []
-			}
-		),
-		cancelToken: new CancelToken(function executor(c) {
-			cancel = c;
-		}),
-	}).catch(err => {
-		if (axios.isCancel(err)) {
-			console.log('error: ', err);
-		} else {
-			console.log('error: ', err);
-		}
-	});
-
-	console.log('result: ', res.data);
-}
-
 // function that gets comma separated numbers form normal numbers.
 export function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -297,4 +269,9 @@ export const getTimeString = (timestamp) => {
 	let second = date.getSeconds().toString().padStart(2, "0");
 
 	return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+}
+
+export const getAmountWithoutDecimal = (amount, decimal) => {
+	let input = new BigNumber(amount).shiftedBy(-decimal).toNumber();
+	return input;
 }

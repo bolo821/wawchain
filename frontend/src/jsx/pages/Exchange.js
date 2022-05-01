@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
 import Header2 from '../layout/header2';
 import Sidebar from '../layout/sidebar';
 import Footer2 from '../layout/footer2';
@@ -8,9 +9,9 @@ import Cwallet from './components/Cwallet';
 import { Button } from 'react-bootstrap';
 
 import { useWeb3React } from "@web3-react/core";
-import Autocomplete from './components/Autocomplete';
+import Autocomplete from './components/AutocompleteToken';
 import { SET_FROM_AUTOCOMPLETE, searchFromAutocomplete, SET_TO_AUTOCOMPLETE, searchToAutocomplete } from '../../actions/exchange';
-import { callAggregatorAPI, getOwnedTokens } from './api/helpers';
+import { callAggregatorAPI, getAmountWithoutDecimal } from './api/helpers';
 
 import getSwapParameters from '@kyberswap/aggregator-sdk';
 import { toast } from 'react-toastify';
@@ -19,18 +20,36 @@ import config from '../../config';
 
 function Exchange() {
     const dispatch = useDispatch();
+    const { type, token } = useParams();
     const autoCompleteFrom = useSelector(state => state.exchange.autoCompleteFrom);
     const autoCompleteTo = useSelector(state => state.exchange.autoCompleteTo);
     const { account } = useWeb3React();
 
     const [ showWalletDlg, setShowWalletDlg ] = useState(false);
+    const [ fromText, setFromText ] = useState('');
     const [ fromToken, setFromToken ] = useState('');
     const [ fromAmount, setFromAmount ] = useState(0);
+    const [ toText, setToText ] = useState('');
     const [ toToken, setToToken ] = useState('');
     const [ toAmount, setToAmount ] = useState(0);
     const [ balance, setBalance ] = useState(-1);
 
     const [ aggregateRes, setAggregateRes ] = useState(null);
+
+    useEffect(() => {
+        let dToken = JSON.parse(token);
+        if (type === 'buy') {
+            setToText(`${dToken.name}(${dToken.symbol})`);
+            setToToken(dToken.address);
+            setFromText('Wrapped CRO(WCRO)');
+            setFromToken('0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23');
+        } else {
+            setFromText(`${dToken.name}(${dToken.symbol})`);
+            setFromToken(dToken.address);
+            setToText('Wrapped CRO(WCRO)');
+            setToToken('0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23');
+        }
+    }, [ type, token ]);
 
     useEffect(() => {
         if (fromToken.length === 42 && toToken.length === 42 && fromAmount > 0) {
@@ -49,29 +68,23 @@ function Exchange() {
             const BALContract = new web3.eth.Contract(config.BALANCE.abi, fromToken);
 
             BALContract.methods.balanceOf(account).call().then(res => {
-                setBalance(res);
+                let decimal = JSON.parse(token).decimal;
+                setBalance(getAmountWithoutDecimal(res, decimal));
             }).catch(err => {
                 setBalance(-1);
             });
         }
     }, [ account, fromToken ]);
 
-    useEffect(() => {
-        if (account) {
-            const web3 = new Web3('https://bsc-dataseed.binance.org/');
-            console.log('web3 methods: ', web3.eth.accounts);
-        }
-    }, [ account ]);
-
     const handleFromTokenSearch = (text, flag) => {
         if (flag) {
-            setFromToken(text);
+            setFromText(text);
             dispatch({
                 type: SET_FROM_AUTOCOMPLETE,
                 payload: {},
             });
         } else {
-            setFromToken(text);
+            setFromText(text);
             if (text.length >= 2) {
                 dispatch(searchFromAutocomplete(text));
             }
@@ -80,13 +93,13 @@ function Exchange() {
 
     const handleToTokenSearch = (text, flag) => {
         if (flag) {
-            setToToken(text);
+            setToText(text);
             dispatch({
                 type: SET_TO_AUTOCOMPLETE,
                 payload: {},
             });
         } else {
-            setToToken(text);
+            setToText(text);
             if (text.length >= 2) {
                 dispatch(searchToAutocomplete(text));
             }
@@ -163,7 +176,7 @@ function Exchange() {
                                                     <div className="col-6">
                                                         <label className="mr-sm-2">From Token</label>
                                                         <div className="input-group mb-3">
-                                                            <Autocomplete searchText={fromToken} setSearchText={handleFromTokenSearch} items={autoCompleteFrom} className='w-100' />
+                                                            <Autocomplete searchText={fromText} setSearchText={handleFromTokenSearch} items={autoCompleteFrom} setToken={setFromToken} className='w-100' />
                                                         </div>
                                                     </div>
                                                     <div className="col-6">
@@ -181,7 +194,7 @@ function Exchange() {
                                                     <div className="col-6">
                                                         <label className="mr-sm-2">To Token</label>
                                                         <div className="input-group mb-3">
-                                                            <Autocomplete searchText={toToken} setSearchText={handleToTokenSearch} items={autoCompleteTo} className='w-100' />
+                                                            <Autocomplete searchText={toText} setSearchText={handleToTokenSearch} items={autoCompleteTo} setToken={setToToken} className='w-100' />
                                                         </div>
                                                     </div>
                                                     <div className="col-6">
@@ -194,7 +207,7 @@ function Exchange() {
                                                 </div>
                                             </div>
                                             <div className="row justify-content-center">
-                                                <Button className="btn btn-success px-4" onClick={handleSwap} disabled={toAmount<=0}>Buy Now</Button>
+                                                <Button className="btn btn-success px-4" onClick={handleSwap} disabled={toAmount<=0}>Exchange Now</Button>
                                             </div>
                                         </form>
                                     </div>
