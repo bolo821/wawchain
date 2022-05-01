@@ -125,6 +125,12 @@
   }
 }
 
+@media(max-width: 400px) {
+  .transaction-table {
+    font-size: 8px;
+  }
+}
+
 .room-list-bn-rt {
   min-width: 102px;
 }
