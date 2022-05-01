@@ -1,6 +1,7 @@
 import { 
     getLogs,
     getCurrentBlockNumber,
+    getHistoryData,
 } from '../jsx/pages/api/helpers';
 import axios from 'axios';
 
@@ -10,6 +11,7 @@ export const EMPTY_LOGS = 'MAIN REDUCER SET LOGS';
 export const SET_BLOCK = 'MAIN REDUCER SET BLOCK';
 export const SET_BUSD_PRICE = 'MAIN REDUCER SET BUSD PRICE';
 export const SET_LIQUIDITY = 'MAIN ACTION SET LIQUIDITY';
+export const SET_VOLUME = 'MAIN ACTION SET VOLUME';
 
 export function setAutoComplete(flag) {
     return {
@@ -75,5 +77,34 @@ export const getLiquidity = address => dispatch => {
         }
     }).catch(err => {
         console.log('error: ', err);
+    });
+}
+
+export const getVolume = () => async dispatch => {
+    const historyData = await getHistoryData({ interval: '1h', from: '0' });
+    let vol1 = 0;
+    let vol6 = 0;
+    let vol24 = 0;
+
+    for (let i=0; i<Math.min(24, historyData.length); i++) {
+        if (i === 0) {
+            vol1 += historyData[i].volume;
+            vol6 += historyData[i].volume;
+            vol24 += historyData[i].volume;
+        } else if (i < 6) {
+            vol6 += historyData[i].volume;
+            vol24 += historyData[i].volume;
+        } else {
+            vol24 += historyData[i].volume;
+        }
+    }
+
+    dispatch({
+        type: SET_VOLUME,
+        payload: {
+            vol1: parseInt(vol1),
+            vol6: parseInt(vol6),
+            vol24: parseInt(vol24),
+        }
     });
 }

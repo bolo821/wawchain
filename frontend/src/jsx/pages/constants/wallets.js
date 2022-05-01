@@ -10,12 +10,12 @@ const Wallets = [
         logo: MetaMaskLogo,
         connector: injected,
     },
-    {
-        title: "WalletConnect",
-        description: "Connect to your WalletConnect Wallet",
-        logo: WalletConnect,
-        connector: walletconnect,
-    }
+    // {
+    //     title: "WalletConnect",
+    //     description: "Connect to your WalletConnect Wallet",
+    //     logo: WalletConnect,
+    //     connector: walletconnect,
+    // }
 ];
 
 const ConnectedWallet = () => {

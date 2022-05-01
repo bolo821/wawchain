@@ -10,7 +10,7 @@ function Footer2() {
                     <div className="row">
                         <div className="col-sm-8 col-12">
                             <div className="copyright">
-                                <p>© Copyright 2022 <Link to="#">Quixlab</Link> I
+                                <p>© Copyright 2022 Apecron
                                 All Rights Reserved</p>
                             </div>
                         </div>

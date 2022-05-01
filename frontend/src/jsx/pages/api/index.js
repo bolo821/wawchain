@@ -62,10 +62,16 @@ export default {
 		try {
 			let rlt = [];
 
+			if (resolution !== localStorage.getItem('resolution')) {
+				localStorage.setItem('resolution', resolution);
+				localStorage.setItem('from', 0);
+			}
+			let from = localStorage.getItem('from');
+
 			if (resolution === '60') {
-				rlt = await getHistoryData({ interval: '1d' });
+				rlt = await getHistoryData({ interval: '1h', from });
 			} else {
-				rlt = await getHistoryData({ interval: `${resolution}m`});
+				rlt = await getHistoryData({ interval: `${resolution}m`, from });
 			}
 
 			if (rlt.length === 0) {

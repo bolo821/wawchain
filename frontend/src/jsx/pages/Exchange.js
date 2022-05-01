@@ -74,7 +74,7 @@ function Exchange() {
                 setBalance(-1);
             });
         }
-    }, [ account, fromToken ]);
+    }, [ account, fromToken, token ]);
 
     const handleFromTokenSearch = (text, flag) => {
         if (flag) {
@@ -152,11 +152,11 @@ function Exchange() {
             <Header2 />
             <Sidebar />
 
-            <div className="content-body">
+            <div className="content-body pb-5">
                 <div className="container">
                     <div className="row mb-5">
                         <div className="col-12">
-                            <Button className="btn btn-primary btn-block" onClick={() => setShowWalletDlg(true)}>{account ? account : 'Connect Wallet'}</Button>
+                            <Button className="btn btn-primary btn-block" onClick={() => setShowWalletDlg(true)}>{account ? `${account.substring(0, 5)}...${account.substring(38, 42)}` : 'Connect Wallet'}</Button>
                         </div>
                     </div>
                     <div className="row">
@@ -173,13 +173,13 @@ function Exchange() {
                                         <form method="post" name="myform" className="currency_validate">
                                             <div className="form-group">
                                                 <div className="row">
-                                                    <div className="col-6">
+                                                    <div className="col-md-6">
                                                         <label className="mr-sm-2">From Token</label>
                                                         <div className="input-group mb-3">
                                                             <Autocomplete searchText={fromText} setSearchText={handleFromTokenSearch} items={autoCompleteFrom} setToken={setFromToken} className='w-100' />
                                                         </div>
                                                     </div>
-                                                    <div className="col-6">
+                                                    <div className="col-md-6">
                                                         <label className="mr-sm-2">From Token Amount</label>
                                                         <div className="input-group mb-3">
                                                             <input type="number" name="fromAmount" className="form-control"
@@ -191,13 +191,13 @@ function Exchange() {
 
                                             <div className="form-group">
                                                 <div className="row">
-                                                    <div className="col-6">
+                                                    <div className="col-md-6">
                                                         <label className="mr-sm-2">To Token</label>
                                                         <div className="input-group mb-3">
                                                             <Autocomplete searchText={toText} setSearchText={handleToTokenSearch} items={autoCompleteTo} setToken={setToToken} className='w-100' />
                                                         </div>
                                                     </div>
-                                                    <div className="col-6">
+                                                    <div className="col-md-6">
                                                         <label className="mr-sm-2">Estimated Token Amount</label>
                                                         <div className="input-group mb-3">
                                                             <input type="number" name="toAmount" className="form-control" disabled

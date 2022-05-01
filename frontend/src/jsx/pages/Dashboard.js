@@ -5,6 +5,7 @@ import { useParams, useHistory, Link } from 'react-router-dom';
 import { Tab, Nav } from 'react-bootstrap';
 import Header2 from '../layout/header2';
 import Sidebar from '../layout/sidebar';
+import Footer2 from '../layout/footer2';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import 'react-rangeslider/lib/index.css'
 import Datafeed from './api';
@@ -23,6 +24,7 @@ import {
     emptyLogs,
     getCurrentBlock,
     getLiquidity,
+    getVolume,
 } from '../../actions/main';
 import { toast } from 'react-toastify';
 import { searchTokens, SET_AUTOCOMPLETE } from '../../actions/search';
@@ -47,6 +49,7 @@ function Dashboard() {
     const block = useSelector(state => state.main.block);
     const autoComplete = useSelector(state => state.search.autoComplete);
     const liquidity = useSelector(state => state.main.liquidity);
+    const volume = useSelector(state => state.main.volume);
     currentBlock = block;
 
     const { tokenId } = useParams();
@@ -141,6 +144,7 @@ function Dashboard() {
 				address: token.address,
                 decimal: token.decimals,
 			}
+            dispatch(getVolume());
             setMarketCap(token.market_cap);
 			setToken(data);
             setPrice(parseFloat(token.usd_price));
@@ -169,6 +173,7 @@ function Dashboard() {
     const initChart = async (token) => {
         localStorage.setItem('initSuccess', 'none');
         localStorage.setItem('from', 0);
+        localStorage.setItem('resolution', 15);
 		window.tvWidget = new window.TradingView.widget({
 			symbol: `${token.symbol}`,
 			interval: '15',
@@ -234,7 +239,7 @@ function Dashboard() {
             <Header2 />
             <Sidebar />
 
-            <div className="content-body mb-0">
+            <div className="content-body mb-0 pb-5">
                 <div className="container-fluid">
                     <div className="row mb-3">
                         <div className="col-10">
@@ -249,52 +254,78 @@ function Dashboard() {
                     </div>
                     
                     <div className="row">
-                        <div className="col-xl-7 col-xxl-12 col-lg-12 col-xxl-7">
+                        <div className="col-xxl-10 col-xl-9 col-lg-12">
                             <div className="card" style={{height: 'calc(100% - 20px)'}}>
                                 <div className="card-header">
                                     <h4 className="card-title">Find your tokens</h4>
                                 </div>
                                 <div className="card-body">
-                                    <div className="row" style={{margin: '0'}}>
-                                        <div className="col-xl col-lg col-md-4 col-sm-4 col-6 row">
-                                            <div style={{width: '60%', display: 'inline-block'}}>
-                                                <p className="mb-0">Token</p>
-                                                <h6>{token ? token.symbol : ''}</h6>
+                                    <div className="row m-0">
+                                        <div className="col-lg-3 col-md-12">
+                                            <div className='row'>
+                                                <div className='col-sm-6'>
+                                                    <p className="mb-0">Token</p>
+                                                    <h6>{token ? token.symbol : ''}</h6>
+                                                </div>
+                                                <div className='col-sm-6'>
+                                                    <p className="mb-0">24h Change</p>
+                                                    <h6 className={rate>=0 ? "text-success" : "text-danger"}>
+                                                        {rate>=0 ? '+' : ''}{rate.toFixed(2)}%
+                                                    </h6>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="col-xl col-lg col-md-4 col-sm-4 col-6">
-                                            <p className="mb-0">24h Change</p>
-                                            <h6 className={rate>=0 ? "text-success" : "text-danger"}>
-                                                {rate>=0 ? '+' : ''}{rate.toFixed(2)}%
-                                            </h6>
+                                        <div className="col-lg-3 col-md-12">
+                                            <div className='row'>
+                                                <div className='col-sm-6'>
+                                                    <p className="mb-0">Price</p>
+                                                    <h6>{price.toFixed(7)}</h6>
+                                                </div>
+                                                <div className='col-sm-6'>
+                                                    <p className="mb-0">Liquidity</p>
+                                                    <h6>${numberWithCommas(parseInt(liquidity))}</h6>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="col-xl col-lg col-md-4 col-sm-4 col-6">
-                                            <p className="mb-0">Price</p>
-                                            <h6>{price.toFixed(7)}</h6>
+                                        <div className="col-lg-3 col-md-12">
+                                            <div className='row'>
+                                                <div className='col-sm-6'>
+                                                    <p className="mb-0">Marketcap</p>
+                                                    <h6>${marketCap ? numberWithCommas(marketCap) : 0}</h6>
+                                                </div>
+                                                <div className='col-sm-6'>
+                                                    <p className="mb-0">1hr volume</p>
+                                                    <h6>${numberWithCommas(volume.vol1)}</h6>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="col-xl col-lg col-md-4 col-sm-4 col-6">
-                                            <p className="mb-0">Liquidity</p>
-                                            <h6>${numberWithCommas(parseInt(liquidity))}</h6>
-                                        </div>
-                                        <div className="col-xl col-lg col-md-4 col-sm-4 col-6">
-                                            <p className="mb-0">Marketcap</p>
-                                            <h6>${marketCap ? numberWithCommas(marketCap) : 0}</h6>
+                                        <div className="col-lg-3 col-md-12">
+                                            <div className='row'>
+                                                <div className='col-sm-6'>
+                                                    <p className="mb-0">6hr volume</p>
+                                                    <h6>${numberWithCommas(volume.vol6)}</h6>
+                                                </div>
+                                                <div className='col-sm-6'>
+                                                    <p className="mb-0">24hr volume</p>
+                                                    <h6>${numberWithCommas(volume.vol24)}</h6>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="col-xl-5 col-xxl-12 col-lg-12 col-xxl-5">
+                        <div className="col-xxl-2 col-xl-3 col-lg-12">
                             <div className="card" style={{height: 'calc(100% - 20px)'}}>
                                 <div className="card-header">
                                     <h4 className="card-title">Buy/Sell this token.</h4>
                                 </div>
                                 <div className="card-body">
                                     <Link className="btn btn-success waves-effect mr-2" to={token ? `/exchange/buy/${JSON.stringify(token)}` : '#'}>
-                                        <span className="search-string-rt">Buy</span>
+                                        <span>Buy</span>
                                     </Link>
                                     <Link className="btn btn-danger waves-effect" to={token ? `/exchange/sell/${JSON.stringify(token)}` : '#'}>
-                                        <span className="search-string-rt">Sell</span>
+                                        <span>Sell</span>
                                     </Link>
                                 </div>
                             </div>
@@ -415,6 +446,8 @@ function Dashboard() {
                     </div>
                 </div>
             </div>
+
+            <Footer2 />
         </div>
     )
 }

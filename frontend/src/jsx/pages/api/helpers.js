@@ -5,11 +5,10 @@ const CancelToken = axios.CancelToken;
 var cancel = null;
 
 // function that gets historical data.
-export const getHistoryData = async data => {
-	const { interval } = data;
+export const getHistoryData = async (data) => {
+	const { interval, from } = data;
 	const token = JSON.parse(localStorage.getItem('token'));
 	const poolAddress = JSON.parse(localStorage.getItem('pool')).address;
-	const from = localStorage.getItem('from');
 
 	const res = await axios.request({
 		url: `${process.env.REACT_APP_SERVER_URL}/api/rpc/get_history_data`,
