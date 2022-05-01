@@ -87,11 +87,11 @@ export const getVolume = () => async dispatch => {
     let vol24 = 0;
 
     for (let i=historyData.length-1; i>=Math.max(0, historyData.length-24); i--) {
-        if (i === 0) {
+        if (i === historyData.length-1) {
             vol1 += historyData[i].volume;
             vol6 += historyData[i].volume;
             vol24 += historyData[i].volume;
-        } else if (i < 6) {
+        } else if (i >= historyData.length-6) {
             vol6 += historyData[i].volume;
             vol24 += historyData[i].volume;
         } else {
