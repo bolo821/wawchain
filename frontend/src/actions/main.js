@@ -86,7 +86,7 @@ export const getVolume = () => async dispatch => {
     let vol6 = 0;
     let vol24 = 0;
 
-    for (let i=0; i<Math.min(24, historyData.length); i++) {
+    for (let i=historyData.length-1; i>=Math.max(0, historyData.length-24); i--) {
         if (i === 0) {
             vol1 += historyData[i].volume;
             vol6 += historyData[i].volume;

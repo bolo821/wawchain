@@ -357,7 +357,7 @@ function Dashboard() {
                                                         <table className="table table-hover transaction-table">
                                                             <thead>
                                                                 <tr>
-                                                                    <th scope="col" className="transaction-col-1">Traded({token.symbol})</th>
+                                                                    <th scope="col" className="transaction-col-1">Traded({token?.symbol})</th>
                                                                     <th scope="col" className="transaction-col-3">Token Price(CRO)</th>
                                                                     <th scope="col" className="transaction-col-1">Value(CRO)</th>
                                                                     <th scope="col" className="transaction-col-2">Time</th>
@@ -387,7 +387,7 @@ function Dashboard() {
                                                         <table className="table transaction-table">
                                                             <thead>
                                                                 <tr>
-                                                                    <th scope="col" className="transaction-col-1">Traded({token.name})</th>
+                                                                    <th scope="col" className="transaction-col-1">Traded({token?.name})</th>
                                                                     <th scope="col" className="transaction-col-3">Token Price(CRO)</th>
                                                                     <th scope="col" className="transaction-col-1">Value(CRO)</th>
                                                                     <th scope="col" className="transaction-col-2">Time</th>
@@ -415,7 +415,7 @@ function Dashboard() {
                                                         <table className="table transaction-table">
                                                             <thead>
                                                                 <tr>
-                                                                    <th scope="col" className="transaction-col-1">Traded({token.name})</th>
+                                                                    <th scope="col" className="transaction-col-1">Traded({token?.name})</th>
                                                                     <th scope="col" className="transaction-col-3">Token Price(CRO)</th>
                                                                     <th scope="col" className="transaction-col-1">Value(CRO)</th>
                                                                     <th scope="col" className="transaction-col-2">Time</th>

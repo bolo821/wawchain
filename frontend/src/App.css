@@ -91,8 +91,7 @@
   top: 0;
 }
 .card-scroll-rt {
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: auto;
 }
 .transaction-col-1, .transaction-col-2, .transaction-col-3 {
   width: 25%;
@@ -122,12 +121,6 @@
 @media(max-width: 576px) {
   .transaction-table {
     font-size: 12px;
-  }
-}
-
-@media(max-width: 400px) {
-  .transaction-table {
-    font-size: 8px;
   }
 }
 
