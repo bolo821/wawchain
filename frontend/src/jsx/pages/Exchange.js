@@ -18,6 +18,8 @@ import { toast } from 'react-toastify';
 import Web3 from "web3";
 import config from '../../config';
 
+const web3 = new Web3(process.env.REACT_APP_RPC_URL);
+
 function Exchange() {
     const dispatch = useDispatch();
     const { type, token } = useParams();
@@ -33,21 +35,33 @@ function Exchange() {
     const [ toToken, setToToken ] = useState('');
     const [ toAmount, setToAmount ] = useState(0);
     const [ balance, setBalance ] = useState(-1);
+    const [ croBalance, setCroBalance ] = useState(0);
 
     const [ aggregateRes, setAggregateRes ] = useState(null);
+
+    useEffect(() => {
+        if (account) {
+            web3.eth.getBalance(account).then(res => {
+                let bal = getAmountWithoutDecimal(res, 18);
+                setCroBalance(bal);
+            }).catch(err => {
+                console.log('error: ', err);
+            });    
+        }
+    }, [ account ]);
 
     useEffect(() => {
         let dToken = JSON.parse(token);
         if (type === 'buy') {
             setToText(`${dToken.name}(${dToken.symbol})`);
             setToToken(dToken.address);
-            setFromText('Wrapped CRO(WCRO)');
-            setFromToken('0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23');
+            setFromText('Cronos(CRO)');
+            setFromToken('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE');
         } else {
             setFromText(`${dToken.name}(${dToken.symbol})`);
             setFromToken(dToken.address);
-            setToText('Wrapped CRO(WCRO)');
-            setToToken('0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23');
+            setToText('Cronos(CRO)');
+            setToToken('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE');
         }
     }, [ type, token ]);
 
@@ -63,18 +77,20 @@ function Exchange() {
     }, [ fromToken, toToken, fromAmount ]);
 
     useEffect(() => {
-        if (account && fromToken !== '' && fromToken.length === 42) {
-            const web3 = new Web3(process.env.REACT_APP_RPC_URL);
+        if (account && fromToken !== '' && fromToken.length === 42 && fromToken !== '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
             const BALContract = new web3.eth.Contract(config.BALANCE.abi, fromToken);
 
             BALContract.methods.balanceOf(account).call().then(res => {
                 let decimal = JSON.parse(token).decimal;
                 setBalance(getAmountWithoutDecimal(res, decimal));
             }).catch(err => {
+                console.log('error: ', err);
                 setBalance(-1);
             });
+        } else if (fromToken === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
+            setBalance(croBalance);
         }
-    }, [ account, fromToken, token ]);
+    }, [ account, fromToken, token, croBalance ]);
 
     const handleFromTokenSearch = (text, flag) => {
         if (flag) {
@@ -135,9 +151,7 @@ function Exchange() {
                 console.log('error: ', err);
             });
     
-            const web3 = new Web3(process.env.REACT_APP_RPC_URL);
             const SWAPContract = new web3.eth.Contract(config.SWAP.abi, config.SWAP.address);
-
             const swapRes = await SWAPContract.methods.swap(swapParameters.args[0], swapParameters.args[1], swapParameters.args[2]).send({ from: account }).catch(err => {
                 console.log('error: ', err);
             })
@@ -154,9 +168,14 @@ function Exchange() {
 
             <div className="content-body pb-5">
                 <div className="container">
-                    <div className="row mb-5">
+                    <div className="row mb-3">
                         <div className="col-12">
                             <Button className="btn btn-primary btn-block" onClick={() => setShowWalletDlg(true)}>{account ? `${account.substring(0, 5)}...${account.substring(38, 42)}` : 'Connect Wallet'}</Button>
+                        </div>
+                    </div>
+                    <div className="row">
+                        <div className="col-12 d-flex justify-content-end">
+                            Your CRO Balance: {croBalance}
                         </div>
                     </div>
                     <div className="row">
@@ -165,7 +184,7 @@ function Exchange() {
                                 <div className="card-header">
                                     <h4 className="card-title">Exchange</h4>
                                     { balance >= 0 &&
-                                        <span>{`Your balance: ${balance}`}</span>
+                                        <span>{`Your token balance: ${balance}`}</span>
                                     }
                                 </div>
                                 <div className="card-body">

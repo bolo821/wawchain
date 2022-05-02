@@ -9982,6 +9982,7 @@ label.error {
 
 .header.dashboard {
   padding: 5px 10px;
+  height: 60px;
   box-shadow: 0 10px 30px 0 rgba(82, 63, 105, 0.08); }
   .header.dashboard .navbar {
     padding: 0px; }
@@ -10157,7 +10158,8 @@ label.error {
   height: 100%;
   width: 60px;
   top: 0;
-  box-shadow: 0 10px 30px 0 rgba(82, 63, 105, 0.08); }
+  box-shadow: 0 10px 30px 0 rgba(82, 63, 105, 0.08);
+}
 
 .menu {
   margin-top: 100px; }
@@ -11061,4 +11063,21 @@ label.error {
     right: 0px;
     bottom: 0px; }
 
-/*# sourceMappingURL=style.css.map */
+.navbar-rt ul {
+  display: none;
+}
+
+@media(max-width: 576px) {
+  .sidebar {
+    display: none;
+  }
+  .navbar-rt ul {
+    display: inline-block;
+  }
+  .menu {
+    margin-top: 0;
+  }
+  .content-body {
+    margin-left: 0;
+  }
+}
