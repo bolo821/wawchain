@@ -18,14 +18,12 @@ import { toast } from 'react-toastify';
 import Web3 from "web3";
 import config from '../../config';
 
-const web3 = new Web3(process.env.REACT_APP_RPC_URL);
-
 function Exchange() {
     const dispatch = useDispatch();
     const { type, token } = useParams();
     const autoCompleteFrom = useSelector(state => state.exchange.autoCompleteFrom);
     const autoCompleteTo = useSelector(state => state.exchange.autoCompleteTo);
-    const { account } = useWeb3React();
+    const { account, library } = useWeb3React();
 
     const [ showWalletDlg, setShowWalletDlg ] = useState(false);
     const [ fromText, setFromText ] = useState('');
@@ -36,11 +34,13 @@ function Exchange() {
     const [ toAmount, setToAmount ] = useState(0);
     const [ balance, setBalance ] = useState(-1);
     const [ croBalance, setCroBalance ] = useState(0);
+    const [ btnText, setBtnText ] = useState('Exchange');
 
     const [ aggregateRes, setAggregateRes ] = useState(null);
 
     useEffect(() => {
         if (account) {
+            const web3 = new Web3(library.provider);
             web3.eth.getBalance(account).then(res => {
                 let bal = getAmountWithoutDecimal(res, 18);
                 setCroBalance(bal);
@@ -48,7 +48,7 @@ function Exchange() {
                 console.log('error: ', err);
             });    
         }
-    }, [ account ]);
+    }, [ account, library ]);
 
     useEffect(() => {
         let dToken = JSON.parse(token);
@@ -56,16 +56,17 @@ function Exchange() {
             setToText(`${dToken.name}(${dToken.symbol})`);
             setToToken(dToken.address);
             setFromText('Cronos(CRO)');
-            setFromToken('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE');
+            setFromToken('0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23');
         } else {
             setFromText(`${dToken.name}(${dToken.symbol})`);
             setFromToken(dToken.address);
             setToText('Cronos(CRO)');
-            setToToken('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE');
+            setToToken('0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23');
         }
     }, [ type, token ]);
 
     useEffect(() => {
+        setAggregateRes(null);
         if (fromToken.length === 42 && toToken.length === 42 && fromAmount > 0) {
             setToAmount(0);
             callAggregatorAPI(fromToken, toToken, fromAmount).then(res => {
@@ -74,10 +75,11 @@ function Exchange() {
             }).catch(err => {
             });
         }
-    }, [ fromToken, toToken, fromAmount ]);
+    }, [ fromToken, toToken, fromAmount, token ]);
 
     useEffect(() => {
-        if (account && fromToken !== '' && fromToken.length === 42 && fromToken !== '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
+        if (account && fromToken !== '' && fromToken.length === 42 && fromToken !== '0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23') {
+            const web3 = new Web3(process.env.REACT_APP_RPC_URL);
             const BALContract = new web3.eth.Contract(config.BALANCE.abi, fromToken);
 
             BALContract.methods.balanceOf(account).call().then(res => {
@@ -87,10 +89,30 @@ function Exchange() {
                 console.log('error: ', err);
                 setBalance(-1);
             });
-        } else if (fromToken === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
+        } else if (fromToken === '0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23') {
             setBalance(croBalance);
         }
-    }, [ account, fromToken, token, croBalance ]);
+    }, [ account, fromToken, token, croBalance, library ]);
+
+    // Check allowance of fromToken once it is given.
+    useEffect(() => {
+        const check = async () => {
+            if (account && aggregateRes && fromToken !== '' && fromToken.length === 42) {
+                const web3 = new Web3(library.provider);
+                const ApproveContract = new web3.eth.Contract(config.APPROVE.abi, aggregateRes.tokens[fromToken].address);
+                let allowedAmount = await ApproveContract.methods.allowance(account, config.SWAP.address).call();
+                console.log('allowed amount: ', allowedAmount);
+    
+                if (allowedAmount.toString() === '0') {
+                    setBtnText('Approve');
+                }    
+            }
+        }
+
+        setTimeout(() => {
+            check();
+        }, 10);
+    }, [ fromToken, account, aggregateRes, library ]);
 
     const handleFromTokenSearch = (text, flag) => {
         if (flag) {
@@ -128,12 +150,28 @@ function Exchange() {
                 toast.warn('Your balance is less than the required amount.');
                 return;
             }
+
+            if (btnText === 'Approve') {
+                const web3 = new Web3(library.provider);
+                const ApproveContract = new web3.eth.Contract(config.APPROVE.abi, aggregateRes.tokens[fromToken].address);
+                const approveRes = await ApproveContract.methods.approve(config.SWAP.address, '1000000000000000000000000000000000').send({ from: account, gasLimit: 70000 }).catch(err => {
+                    console.log('error: ', err);
+                });
+
+                if (approveRes) {
+                    toast.success('Successfully approved.');
+                    setBtnText('Exchange');
+                }
+                return;
+            }
+            console.log('aggregate param: ', aggregateRes);
+
             const swapParameters = await getSwapParameters({
                 chainId: 25,
-                currencyInAddress: fromToken,
+                currencyInAddress: fromToken === '0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23' ? '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE' : fromToken,
                 currencyInDecimals: aggregateRes.tokens[fromToken].decimals,
                 amountIn: aggregateRes.inputAmount,
-                currencyOutAddress: toToken,
+                currencyOutAddress: toToken === '0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23' ? '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE' : toToken,
                 currencyOutDecimals: aggregateRes.tokens[toToken].decimals,
                 tradeConfig: {
                     minAmountOut: aggregateRes.minAmountOut,
@@ -150,15 +188,32 @@ function Exchange() {
             }).catch(err => {
                 console.log('error: ', err);
             });
-    
+
+            console.log('swap parameters: ', swapParameters);
+            let dataParam = swapParameters.args[2].replace('5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23', 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
+            console.log('data param: ', dataParam);
+
+            const web3 = new Web3(library.provider);
             const SWAPContract = new web3.eth.Contract(config.SWAP.abi, config.SWAP.address);
-            const swapRes = await SWAPContract.methods.swap(swapParameters.args[0], swapParameters.args[1], swapParameters.args[2]).send({ from: account }).catch(err => {
+            await SWAPContract.methods.swap(swapParameters.args[0], swapParameters.args[1], dataParam).send({ from: account, gasLimit: 400000 }).catch(err => {
                 console.log('error: ', err);
             })
-            console.log('swap result: ', swapRes);
         } else {
             toast.warn('Please connect your wallet.');
         }
+    }
+
+    const handleSwitchCurrency = () => {
+        let tempText = fromText;
+        let tempToken = fromToken;
+
+        setFromText(toText);
+        setFromToken(toToken);
+        setFromAmount(0);
+
+        setToText(tempText);
+        setToToken(tempToken);
+        setToAmount(0);
     }
 
     return (
@@ -208,6 +263,12 @@ function Exchange() {
                                                 </div>
                                             </div>
 
+                                            <div className="row">
+                                                <div className="col-6 d-flex justify-content-end">
+                                                    <span className="switch-btn-rt" onClick={handleSwitchCurrency}>Switch</span>
+                                                </div>
+                                            </div>
+
                                             <div className="form-group">
                                                 <div className="row">
                                                     <div className="col-md-6">
@@ -226,7 +287,7 @@ function Exchange() {
                                                 </div>
                                             </div>
                                             <div className="row justify-content-center">
-                                                <Button className="btn btn-success px-4" onClick={handleSwap} disabled={toAmount<=0}>Exchange Now</Button>
+                                                <Button className="btn btn-success px-4" onClick={handleSwap} disabled={toAmount<=0 || !account}>{btnText}</Button>
                                             </div>
                                         </form>
                                     </div>

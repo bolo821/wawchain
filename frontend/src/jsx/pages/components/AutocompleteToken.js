@@ -21,7 +21,7 @@ const AutocompleteToken = props => {
                             return (
                                 <p key={index} value={ele.token_id} onClick={() => {setSearchText(`${ele.content.name}(${ele.content.symbol})`, true); setToken(ele.token_id)}}>
                                     <span className="mr-2">
-                                        {ele.content.name}
+                                        {`${ele.content.name}(${ele.content.symbol})`}
                                     </span>
                                     <span>{ele.token_id}</span>
                                 </p>

@@ -155,3 +155,10 @@
     width: 25%;
   }
 }
+
+.switch-btn-rt {
+  color: var(--primary);
+}
+.switch-btn-rt:hover {
+  cursor: pointer;
+}

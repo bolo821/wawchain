@@ -152,7 +152,7 @@ export async function getPairs(address) {
 
 // function that calls aggregator api.
 export const callAggregatorAPI = (tokenIn, tokenOut, amountIn) => new Promise((resolve, reject) => {
-	let sendAmount = new BigNumber(amountIn).shiftedBy(18).multipliedBy(0.9992).toNumber();
+	let sendAmount = new BigNumber(amountIn).shiftedBy(9).multipliedBy(0.9992).toNumber();
 	axios.request({
 		url: `https://aggregator-api.kyberswap.com/cronos/route?tokenIn=${tokenIn}&tokenOut=${tokenOut}&amountIn=${sendAmount}`,
 		method: 'GET',
@@ -164,12 +164,18 @@ export const callAggregatorAPI = (tokenIn, tokenOut, amountIn) => new Promise((r
 		}),
 	}).then(res => {
 		if(res && res.data) {
+			let fromDecimal = res.data.tokens[tokenIn].decimals;
+			let delta = fromDecimal - 9;
+			let inputAmount = new BigNumber(res.data.inputAmount).shiftedBy(delta).toNumber();
+			let outputAmount = new BigNumber(res.data.outputAmount).shiftedBy(delta).toNumber();
+
 			let outTokenDecimal = res.data.tokens[tokenOut].decimals;
-			let estimateAmount = new BigNumber(res.data.outputAmount).shiftedBy(-outTokenDecimal).toNumber();
-			let minAmountOut = new BigNumber(res.data.outputAmount).dividedBy(1.05).toNumber();
+			let estimateAmount = new BigNumber(res.data.outputAmount).shiftedBy(-outTokenDecimal+delta).toNumber();
+			let slippage = 0.2;
+			let minAmountOut = new BigNumber(res.data.outputAmount).shiftedBy(delta).dividedToIntegerBy(1 + slippage).toNumber();
 	
 			resolve({
-				data: { ...res.data, minAmountOut: minAmountOut },
+				data: { ...res.data, minAmountOut: minAmountOut, inputAmount: inputAmount, outputAmount: outputAmount },
 				estimate: estimateAmount,
 			});
 		} else {
