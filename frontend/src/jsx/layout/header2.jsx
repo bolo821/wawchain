@@ -17,7 +17,7 @@ function Header2() {
                                     <Link to="/" className={`m-0 ${pathname.includes('token') ? 'active' : ''}`} title="home">
                                         <span><i className="mdi mdi-view-dashboard"></i></span>
                                     </Link>
-                                    <Link to={`/exchange/buy/${JSON.stringify({ name: "ApeCron", symbol: "APECRON", address: "0x09aae6c66bc670016801e34d19b1775b038b6c43", decimal: 18 })}`} className={`m-0 ${pathname.includes('exchange') ? 'active' : ''}`} title="Exchange">
+                                    <Link to={`/exchange/buy/${JSON.stringify({ name: "ApeCron", symbol: "APECRON", address: "0x09aae6c66bc670016801e34d19b1775b038b6c43", decimal: 9 })}`} className={`m-0 ${pathname.includes('exchange') ? 'active' : ''}`} title="Exchange">
                                         <span><i className="mdi mdi-tumblr-reblog"></i></span>
                                     </Link>
                                 </li>

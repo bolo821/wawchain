@@ -15,6 +15,14 @@ export const searchFromAutocomplete = searchTerm => dispatch => {
 		}
 	}).then(res => {
 		if (res && res.data) {
+			let term = searchTerm.toLowerCase();
+			if ('cronos'.includes(term) || process.env.REACT_APP_NATIVE_COIN_ADDRESS.toLowerCase().includes(term)) {
+				dispatch({
+					type: SET_FROM_AUTOCOMPLETE,
+					payload: { ...res.data, '-1': { token_id: process.env.REACT_APP_NATIVE_COIN_ADDRESS, content: { name: 'Cronos', symbol: 'CRO' } } },
+				});
+				return;
+			}
 			dispatch({
                 type: SET_FROM_AUTOCOMPLETE,
                 payload: res.data,
@@ -37,6 +45,15 @@ export const searchToAutocomplete = searchTerm => dispatch => {
 		}
 	}).then(res => {
 		if (res && res.data) {
+			let term = searchTerm.toLowerCase();
+			if ('cronos'.includes(term) || process.env.REACT_APP_NATIVE_COIN_ADDRESS.toLowerCase().includes(term)) {
+				dispatch({
+					type: SET_TO_AUTOCOMPLETE,
+					payload: { ...res.data, '-1': { token_id: process.env.REACT_APP_NATIVE_COIN_ADDRESS, content: { name: 'Cronos', symbol: 'CRO' } } },
+				});
+				return;
+			}
+
 			dispatch({
                 type: SET_TO_AUTOCOMPLETE,
                 payload: res.data,

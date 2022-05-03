@@ -27,10 +27,10 @@ function Exchange() {
 
     const [ showWalletDlg, setShowWalletDlg ] = useState(false);
     const [ fromText, setFromText ] = useState('');
-    const [ fromToken, setFromToken ] = useState('');
+    const [ fromToken, setFromToken ] = useState(null);
     const [ fromAmount, setFromAmount ] = useState(0);
     const [ toText, setToText ] = useState('');
-    const [ toToken, setToToken ] = useState('');
+    const [ toToken, setToToken ] = useState(null);
     const [ toAmount, setToAmount ] = useState(0);
     const [ balance, setBalance ] = useState(-1);
     const [ croBalance, setCroBalance ] = useState(0);
@@ -54,58 +54,74 @@ function Exchange() {
         let dToken = JSON.parse(token);
         if (type === 'buy') {
             setToText(`${dToken.name}(${dToken.symbol})`);
-            setToToken(dToken.address);
+            setToToken(dToken);
             setFromText('Cronos(CRO)');
-            setFromToken('0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23');
+            setFromToken({
+                address: process.env.REACT_APP_NATIVE_COIN_ADDRESS,
+                symbol: 'CRO',
+                name: 'Cronos',
+                decimal: 18,
+            });
         } else {
             setFromText(`${dToken.name}(${dToken.symbol})`);
-            setFromToken(dToken.address);
+            setFromToken(dToken);
             setToText('Cronos(CRO)');
-            setToToken('0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23');
+            setToToken({
+                address: process.env.REACT_APP_NATIVE_COIN_ADDRESS,
+                symbol: 'CRO',
+                name: 'Cronos',
+                decimal: 18,
+            });
         }
     }, [ type, token ]);
 
     useEffect(() => {
+        if (account && fromToken && fromToken.address !== process.env.REACT_APP_NATIVE_COIN_ADDRESS) {
+            console.log('from token: ', fromToken);
+            const web3 = new Web3(process.env.REACT_APP_RPC_URL);
+            const BALContract = new web3.eth.Contract(config.BALANCE.abi, fromToken.address);
+
+            BALContract.methods.balanceOf(account).call().then(res => {
+                setBalance(getAmountWithoutDecimal(res, fromToken.decimal));
+            }).catch(err => {
+                console.log('error: ', err);
+                setBalance(-1);
+            });
+        } else if (fromToken && fromToken.address === process.env.REACT_APP_NATIVE_COIN_ADDRESS) {
+            setBalance(croBalance);
+        }
+    }, [ account, fromToken, croBalance, library ]);
+
+    useEffect(() => {
         setAggregateRes(null);
-        if (fromToken.length === 42 && toToken.length === 42 && fromAmount > 0) {
+        if (fromToken && toToken && fromAmount > 0) {
             setToAmount(0);
-            callAggregatorAPI(fromToken, toToken, fromAmount).then(res => {
+
+            let from = fromToken.address !== process.env.REACT_APP_NATIVE_COIN_ADDRESS ? fromToken.address : '0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23';
+            let to = toToken.address !== process.env.REACT_APP_NATIVE_COIN_ADDRESS ? toToken.address : '0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23';
+
+            callAggregatorAPI(from, to, fromAmount, fromToken.decimal).then(res => {
                 setToAmount(res.estimate);
                 setAggregateRes(res.data);
             }).catch(err => {
             });
         }
-    }, [ fromToken, toToken, fromAmount, token ]);
-
-    useEffect(() => {
-        if (account && fromToken !== '' && fromToken.length === 42 && fromToken !== '0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23') {
-            const web3 = new Web3(process.env.REACT_APP_RPC_URL);
-            const BALContract = new web3.eth.Contract(config.BALANCE.abi, fromToken);
-
-            BALContract.methods.balanceOf(account).call().then(res => {
-                let decimal = JSON.parse(token).decimal;
-                setBalance(getAmountWithoutDecimal(res, decimal));
-            }).catch(err => {
-                console.log('error: ', err);
-                setBalance(-1);
-            });
-        } else if (fromToken === '0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23') {
-            setBalance(croBalance);
-        }
-    }, [ account, fromToken, token, croBalance, library ]);
+    }, [ fromToken, toToken, fromAmount ]);
 
     // Check allowance of fromToken once it is given.
     useEffect(() => {
         const check = async () => {
-            if (account && aggregateRes && fromToken !== '' && fromToken.length === 42) {
+            if (account && aggregateRes && fromToken.address !== process.env.REACT_APP_NATIVE_COIN_ADDRESS) {
                 const web3 = new Web3(library.provider);
-                const ApproveContract = new web3.eth.Contract(config.APPROVE.abi, aggregateRes.tokens[fromToken].address);
+                const ApproveContract = new web3.eth.Contract(config.APPROVE.abi, fromToken.address);
                 let allowedAmount = await ApproveContract.methods.allowance(account, config.SWAP.address).call();
                 console.log('allowed amount: ', allowedAmount);
     
                 if (allowedAmount.toString() === '0') {
                     setBtnText('Approve');
                 }    
+            } else {
+                setBtnText('Exchange');
             }
         }
 
@@ -153,7 +169,7 @@ function Exchange() {
 
             if (btnText === 'Approve') {
                 const web3 = new Web3(library.provider);
-                const ApproveContract = new web3.eth.Contract(config.APPROVE.abi, aggregateRes.tokens[fromToken].address);
+                const ApproveContract = new web3.eth.Contract(config.APPROVE.abi, fromToken.address);
                 const approveRes = await ApproveContract.methods.approve(config.SWAP.address, '1000000000000000000000000000000000').send({ from: account, gasLimit: 70000 }).catch(err => {
                     console.log('error: ', err);
                 });
@@ -168,11 +184,11 @@ function Exchange() {
 
             const swapParameters = await getSwapParameters({
                 chainId: 25,
-                currencyInAddress: fromToken === '0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23' ? '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE' : fromToken,
-                currencyInDecimals: aggregateRes.tokens[fromToken].decimals,
+                currencyInAddress: fromToken.address,
+                currencyInDecimals: fromToken.decimal,
                 amountIn: aggregateRes.inputAmount,
-                currencyOutAddress: toToken === '0x5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23' ? '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE' : toToken,
-                currencyOutDecimals: aggregateRes.tokens[toToken].decimals,
+                currencyOutAddress: toToken.address,
+                currencyOutDecimals: toToken.decimal,
                 tradeConfig: {
                     minAmountOut: aggregateRes.minAmountOut,
                     recipient: account,
@@ -188,10 +204,6 @@ function Exchange() {
             }).catch(err => {
                 console.log('error: ', err);
             });
-
-            // console.log('swap parameters: ', swapParameters);
-            // let dataParam = swapParameters.args[2].replace('5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23', 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
-            // console.log('data param: ', dataParam);
 
             const web3 = new Web3(library.provider);
             const SWAPContract = new web3.eth.Contract(config.SWAP.abi, config.SWAP.address);
