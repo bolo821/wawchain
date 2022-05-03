@@ -189,13 +189,13 @@ function Exchange() {
                 console.log('error: ', err);
             });
 
-            console.log('swap parameters: ', swapParameters);
-            let dataParam = swapParameters.args[2].replace('5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23', 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
-            console.log('data param: ', dataParam);
+            // console.log('swap parameters: ', swapParameters);
+            // let dataParam = swapParameters.args[2].replace('5c7f8a570d578ed84e63fdfa7b1ee72deae1ae23', 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
+            // console.log('data param: ', dataParam);
 
             const web3 = new Web3(library.provider);
             const SWAPContract = new web3.eth.Contract(config.SWAP.abi, config.SWAP.address);
-            await SWAPContract.methods.swap(swapParameters.args[0], swapParameters.args[1], dataParam).send({ from: account, gasLimit: 400000 }).catch(err => {
+            await SWAPContract.methods.swap(swapParameters.args[0], swapParameters.args[1], swapParameters.args[2]).send({ from: account, gasLimit: 400000, value: swapParameters.value }).catch(err => {
                 console.log('error: ', err);
             })
         } else {
