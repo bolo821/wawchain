@@ -12,6 +12,7 @@ export const SET_BLOCK = 'MAIN REDUCER SET BLOCK';
 export const SET_BUSD_PRICE = 'MAIN REDUCER SET BUSD PRICE';
 export const SET_LIQUIDITY = 'MAIN ACTION SET LIQUIDITY';
 export const SET_VOLUME = 'MAIN ACTION SET VOLUME';
+export const SET_PROCESSING = 'MANI ACTION SET PROCESSING';
 
 export function setAutoComplete(flag) {
     return {
@@ -107,4 +108,11 @@ export const getVolume = () => async dispatch => {
             vol24: parseInt(vol24),
         }
     });
+}
+
+export const setProcessing = flag => {
+    return {
+        type: SET_PROCESSING,
+        payload: flag,
+    }
 }

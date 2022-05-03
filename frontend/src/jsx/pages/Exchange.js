@@ -17,6 +17,7 @@ import getSwapParameters from '@kyberswap/aggregator-sdk';
 import { toast } from 'react-toastify';
 import Web3 from "web3";
 import config from '../../config';
+import { setProcessing } from '../../actions/main';
 
 function Exchange() {
     const dispatch = useDispatch();
@@ -45,7 +46,6 @@ function Exchange() {
                 let bal = getAmountWithoutDecimal(res, 18);
                 setCroBalance(bal);
             }).catch(err => {
-                console.log('error: ', err);
             });    
         }
     }, [ account, library ]);
@@ -77,14 +77,12 @@ function Exchange() {
 
     useEffect(() => {
         if (account && fromToken && fromToken.address !== process.env.REACT_APP_NATIVE_COIN_ADDRESS) {
-            console.log('from token: ', fromToken);
             const web3 = new Web3(process.env.REACT_APP_RPC_URL);
             const BALContract = new web3.eth.Contract(config.BALANCE.abi, fromToken.address);
 
             BALContract.methods.balanceOf(account).call().then(res => {
                 setBalance(getAmountWithoutDecimal(res, fromToken.decimal));
             }).catch(err => {
-                console.log('error: ', err);
                 setBalance(-1);
             });
         } else if (fromToken && fromToken.address === process.env.REACT_APP_NATIVE_COIN_ADDRESS) {
@@ -115,7 +113,6 @@ function Exchange() {
                 const web3 = new Web3(library.provider);
                 const ApproveContract = new web3.eth.Contract(config.APPROVE.abi, fromToken.address);
                 let allowedAmount = await ApproveContract.methods.allowance(account, config.SWAP.address).call();
-                console.log('allowed amount: ', allowedAmount);
     
                 if (allowedAmount.toString() === '0') {
                     setBtnText('Approve');
@@ -168,20 +165,22 @@ function Exchange() {
             }
 
             if (btnText === 'Approve') {
+                dispatch(setProcessing(true));
                 const web3 = new Web3(library.provider);
                 const ApproveContract = new web3.eth.Contract(config.APPROVE.abi, fromToken.address);
                 const approveRes = await ApproveContract.methods.approve(config.SWAP.address, '1000000000000000000000000000000000').send({ from: account, gasLimit: 70000 }).catch(err => {
-                    console.log('error: ', err);
+                    dispatch(setProcessing(false));
                 });
 
                 if (approveRes) {
                     toast.success('Successfully approved.');
                     setBtnText('Exchange');
                 }
+                dispatch(setProcessing(false));
                 return;
             }
-            console.log('aggregate param: ', aggregateRes);
 
+            dispatch(setProcessing(true));
             const swapParameters = await getSwapParameters({
                 chainId: 25,
                 currencyInAddress: fromToken.address,
@@ -202,14 +201,23 @@ function Exchange() {
                 },
                 customTradeRoute: JSON.stringify(aggregateRes.swaps),
             }).catch(err => {
-                console.log('error: ', err);
+                dispatch(setProcessing(false));
             });
 
             const web3 = new Web3(library.provider);
             const SWAPContract = new web3.eth.Contract(config.SWAP.abi, config.SWAP.address);
-            await SWAPContract.methods.swap(swapParameters.args[0], swapParameters.args[1], swapParameters.args[2]).send({ from: account, gasLimit: 400000, value: swapParameters.value }).catch(err => {
-                console.log('error: ', err);
-            })
+            let swapRes = await SWAPContract.methods.swap(swapParameters.args[0], swapParameters.args[1], swapParameters.args[2]).send({ from: account, gasLimit: 400000, value: swapParameters.value }).catch(err => {
+                dispatch(setProcessing(false));
+            });
+            if (swapRes) {
+                const web3 = new Web3(library.provider);
+                web3.eth.getBalance(account).then(res => {
+                    let bal = getAmountWithoutDecimal(res, 18);
+                    setCroBalance(bal);
+                }).catch(err => {
+                });
+            }
+            dispatch(setProcessing(false));
         } else {
             toast.warn('Please connect your wallet.');
         }

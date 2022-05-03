@@ -6,6 +6,7 @@ import {
   SET_BUSD_PRICE,
   SET_LIQUIDITY,
   SET_VOLUME,
+  SET_PROCESSING,
 } from '../actions/main';
 
 const defaultState = {
@@ -23,6 +24,7 @@ const defaultState = {
     vol6: 0,
     vol24: 0,
   },
+  processing: false,
 }
 
 export default (state = defaultState, action) => {
@@ -119,6 +121,12 @@ export default (state = defaultState, action) => {
       return {
         ...state,
         volume: action.payload,
+      }
+    }
+    case SET_PROCESSING: {
+      return {
+        ...state,
+        processing: action.payload,
       }
     }
     default:
