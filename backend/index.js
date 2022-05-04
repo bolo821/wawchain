@@ -26,9 +26,8 @@ const search = require('./routes/searchRoutes');
 app.use('/api/rpc', rpc);
 app.use('/api/search', search);
 
-let PORT;
+let PORT = process.env.PORT;
 if (MODE === 'production') {
-	// PORT = 8443;
 	// const httpsServer = https.createServer({
 	// 	key: fs.readFileSync('./wawchain.com.key'),
 	// 	cert: fs.readFileSync('./wawchain_com_139798397wawchain_com.crt'),
@@ -48,7 +47,6 @@ if (MODE === 'production') {
 	// 	console.log(`HTTPS Server running on port ${PORT}`);
 	// });
 } else if (MODE === 'development') {
-	PORT = 5000;
 	const server = http.createServer(app);
 	options = {
 		cors: true,
