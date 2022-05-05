@@ -1,5 +1,5 @@
 {
-  "name": "bsctoken-server",
+  "name": "apecron-server",
   "version": "1.0.0",
   "description": "Information about bsc tokens.",
   "main": "index.js",

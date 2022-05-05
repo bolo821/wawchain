@@ -145,6 +145,14 @@ function Dashboard() {
                 decimal: token.decimals,
 			}
             localStorage.setItem('token', JSON.stringify(data));
+
+            let pairs = await getPairs(token.address);
+            if (pairs && pairs.length) {
+                localStorage.setItem('pool', JSON.stringify(pairs[0]));
+                await getMarketInfo(Math.max(COMMON_TOKENS.indexOf(pairs[0].token0), COMMON_TOKENS.indexOf(pairs[0].token1)));
+                setTimeout(() => initChart(data));
+            }
+
             dispatch(getVolume());
             setMarketCap(token.market_cap);
 			setToken(data);
@@ -155,17 +163,9 @@ function Dashboard() {
                     setRate(res.changes[4].value);
                 }
             }).catch(err => {
-
             });
 
             unmountComponent = false;
-
-            let pairs = await getPairs(token.address);
-            if (pairs && pairs.length) {
-                localStorage.setItem('pool', JSON.stringify(pairs[0]));
-                await getMarketInfo(Math.max(COMMON_TOKENS.indexOf(pairs[0].token0), COMMON_TOKENS.indexOf(pairs[0].token1)));
-                setTimeout(() => initChart(data));
-            }
 		}
 	}
 
