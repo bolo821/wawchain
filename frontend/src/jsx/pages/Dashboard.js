@@ -144,11 +144,11 @@ function Dashboard() {
 				address: token.address,
                 decimal: token.decimals,
 			}
+            localStorage.setItem('token', JSON.stringify(data));
             dispatch(getVolume());
             setMarketCap(token.market_cap);
 			setToken(data);
             setPrice(parseFloat(token.usd_price));
-			localStorage.setItem('token', JSON.stringify(data));
 
             getParameters(token.address).then(res => {
                 if (res) {
