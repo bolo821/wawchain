@@ -9,8 +9,10 @@ export const injected = new InjectedConnector({
 });
 
 export const walletconnect = new WalletConnectConnector({
-    rpc: { 1: RPC_URL },
+    rpc: { 25: RPC_URL },
+    chainId: 25,
     bridge: "https://bridge.walletconnect.org",
     qrcode: true,
     pollingInterval: POLLING_INTERVAL,
+    infuraId: RPC_URL,
 });

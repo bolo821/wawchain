@@ -53,8 +53,8 @@ const Cwallet = ({ isOpen, setIsOpen }) => {
         setError,
     } = useWeb3React();
 
-    const [activatingConnector, setActivatingConnector] = useState(false);
-    const [isSelectingWallet, setIsSelectingWallet] = useState(true);
+    const [ activatingConnector, setActivatingConnector ] = useState(false);
+    const [ isSelectingWallet, setIsSelectingWallet ] = useState(true);
     const cWallet = ConnectedWallet();
 
     useEffect(() => {
