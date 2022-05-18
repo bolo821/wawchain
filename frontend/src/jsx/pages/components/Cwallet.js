@@ -77,7 +77,6 @@ const Cwallet = ({ isOpen, setIsOpen }) => {
     useInactiveListener(!triedEager);
 
     const onConnectWallet = async (item) => {
-        console.log('item: ', item);
         setActivatingConnector(item.connector);
         setIsSelectingWallet(false);
         await activate(item.connector);

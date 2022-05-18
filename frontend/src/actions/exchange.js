@@ -63,16 +63,3 @@ export const searchToAutocomplete = searchTerm => dispatch => {
 		console.log('error: ', err);
 	});
 }
-
-export const getTokensInWallet = walletAddress => dispatch => {
-	axios.request({
-		url: `${process.env.REACT_APP_SERVER_URL}/api/search/${walletAddress}`,
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	}).then(res => {
-	}).catch(err => {
-		console.log('error: ', err);
-	});
-}
